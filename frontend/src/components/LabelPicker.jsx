@@ -90,7 +90,7 @@ export default function LabelPicker({ labels, highlightId, style, onPick, onCrea
         ref={inputRef}
         className="picker-input"
         value={query}
-        placeholder={labels.length ? 'Label…' : 'Name the first label…'}
+        placeholder={labels.length ? 'Choose, or type a new label…' : 'Name the first label…'}
         spellCheck={false}
         autoComplete="off"
         onChange={(event) => {
@@ -134,6 +134,11 @@ export default function LabelPicker({ labels, highlightId, style, onPick, onCrea
         </ul>
       )}
       {rows.length === 0 && <p className="picker-hint">Type a name and press Enter.</p>}
+      {rows.length > 0 && !needle && (
+        <p className="picker-foot">
+          <kbd>↵</kbd> keep · or type a new label name
+        </p>
+      )}
     </div>
   )
 }

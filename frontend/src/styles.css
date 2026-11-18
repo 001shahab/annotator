@@ -1178,6 +1178,18 @@ kbd {
   font-size: 12px;
 }
 
+.picker-foot {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 7px 4px 2px;
+  border-top: 1px solid var(--gray-150);
+  color: var(--gray-500);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 /* ------------------------------------------------------------ right panel */
 
 .panel {
@@ -1369,6 +1381,69 @@ kbd {
   border: 0;
   outline: 0;
   background: transparent;
+}
+
+.switch-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: none;
+  margin: -4px 14px 14px;
+  color: var(--space-600);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.switch-row input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.switch {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--gray-300);
+  transition: background 0.15s;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+}
+
+.switch-row input:checked + .switch {
+  background: var(--mustard);
+}
+
+.switch-row input:checked + .switch::after {
+  transform: translateX(12px);
+}
+
+.switch-row input:focus-visible + .switch {
+  outline: 2px solid var(--mustard);
+  outline-offset: 2px;
+}
+
+.panel-hint {
+  flex: none;
+  padding: 9px 14px 11px;
+  border-top: 1px solid var(--line);
+  color: var(--gray-500);
+  font-size: 11.5px;
+  line-height: 1.7;
 }
 
 .box-list {

@@ -22,9 +22,10 @@ Options: `python app.py --port 9000 --data ./my-session --no-browser`
 
 1. **Add files.** Drop images or PDFs anywhere in the window. Every PDF page
    becomes one image.
-2. **Draw.** Drag on the image. The box takes the label you used last, so
-   repeating the same class costs nothing. No labels yet? A small picker opens
-   next to the box: type a name, press Enter, done.
+2. **Draw.** Drag on the image. A small label list opens next to the new box
+   with the label you used last already ticked: press Enter to keep it, click
+   or press `1`–`9` for another one, or type a new name to create a label on
+   the spot.
 3. **Export.** `Export → COCO JSON`, or `COCO dataset (.zip)` for the
    annotations together with all images.
 
@@ -38,7 +39,11 @@ come back.
   three), or create them at any time from the right panel or the picker.
 - Each label gets its own colour, used for its boxes everywhere. Click the
   colour swatch to change it; double-click a name to rename it.
-- Press `1`–`9` to choose the label you draw with.
+- To change a box's label, select the box and click a label in the panel or
+  press `1`–`9`. Enter, `L` or a double-click opens the label list instead.
+- Annotating a long run of one class? Switch off **Ask for a label on every
+  new box**: new boxes then reuse the last label without asking, and `1`–`9`
+  switches the label you draw with.
 - Show or hide any label with its eye icon (Alt-click shows only that one),
   or use **Show all** / **Hide all**. `H` hides every box for a clean look at
   the image and brings them back exactly as they were.
@@ -70,7 +75,8 @@ result can be adjusted or undone.
 | Drag a box / its edge | Move / resize |
 | Arrow keys | Nudge the selected box 1 px (Shift: 10 px) |
 | `Delete` | Remove the selected box |
-| `Enter` or `L`, or double-click | Change a box's label |
+| `1`–`9` | Set the label of the selected box (and for new boxes) |
+| `Enter` or `L`, or double-click | Open the label list for a box |
 | `Tab` | Select the next box |
 | `Cmd/Ctrl+Z`, `Shift+Cmd/Ctrl+Z` | Undo, redo |
 | `D` / `A` (or `→` / `←`) | Next / previous image |

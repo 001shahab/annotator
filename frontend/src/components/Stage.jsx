@@ -422,7 +422,8 @@ export default function Stage({
     const below = anchor.t + anchor.h + 8
     pickerStyle = {
       left: clamp(anchor.l, 8, Math.max(8, size.w - 252)),
-      top: below + 260 > size.h ? clamp(anchor.t - 268, 8, Math.max(8, size.h - 268)) : below,
+      // Flip above the box when there is no room below (the picker is ~300px tall).
+      top: below + 300 > size.h ? clamp(anchor.t - 308, 8, Math.max(8, size.h - 308)) : below,
     }
   }
 

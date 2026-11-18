@@ -74,9 +74,9 @@ const SHORTCUTS = [
   {
     title: 'Labels',
     rows: [
-      ['1 – 9', 'Choose the label to draw with'],
-      ['Enter or L', 'Change the selected box’s label'],
-      ['Double-click', 'Change a box’s label'],
+      ['1 – 9', 'Set the label (of the selected box, and for new ones)'],
+      ['Enter or L', 'Open the label list for the selected box'],
+      ['Double-click', 'Open the label list for a box'],
       ['H', 'Hide or show all boxes'],
     ],
   },

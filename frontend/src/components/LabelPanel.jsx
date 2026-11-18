@@ -85,6 +85,8 @@ export default function LabelPanel({
   hidden,
   boxes,
   selectedId,
+  askLabel,
+  onAskLabel,
   onActivate,
   onToggle,
   onSolo,
@@ -165,6 +167,22 @@ export default function LabelPanel({
           />
           {draft.trim() && <kbd>↵</kbd>}
         </form>
+
+        <label
+          className="switch-row"
+          title="On: choose the label each time you draw a box. Off: new boxes silently reuse the last label."
+        >
+          <input
+            type="checkbox"
+            checked={askLabel}
+            onChange={(event) => {
+              onAskLabel(event.target.checked)
+              event.target.blur() // keep the keyboard on the canvas
+            }}
+          />
+          <i className="switch" aria-hidden="true" />
+          <span>Ask for a label on every new box</span>
+        </label>
       </section>
 
       <section className="panel panel-boxes">
@@ -206,6 +224,17 @@ export default function LabelPanel({
               )
             })}
           </ul>
+        )}
+        {boxes.length > 0 && (
+          <p className="panel-hint">
+            {selectedId ? (
+              <>
+                Click a label above or press <kbd>1</kbd>–<kbd>9</kbd> to change this box’s label.
+              </>
+            ) : (
+              'Select a box to move, resize or relabel it.'
+            )}
+          </p>
         )}
       </section>
     </aside>

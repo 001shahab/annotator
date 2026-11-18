@@ -17,6 +17,7 @@ import { boxes as countBoxes, download, isTyping, plural, recall, remember, uid 
 const ACCEPTED_FILES = 'image/*,application/pdf,.pdf'
 const REMEMBER_IMAGE = 'annotator.image'
 const REMEMBER_LABEL = 'annotator.label'
+const REMEMBER_ASK = 'annotator.ask'
 const HISTORY_LIMIT = 200
 
 export default function App() {
@@ -43,6 +44,9 @@ export default function App() {
   const [showKeys, setShowKeys] = useState(false)
   const [dropping, setDropping] = useState(false)
   const [flash, setFlash] = useState(null)
+  // Offer the label choice on every new box (on), or keep reusing the last
+  // label without asking (off, for long runs of one class).
+  const [askLabel, setAskLabel] = useState(() => recall(REMEMBER_ASK) !== '0')
   const [, setHistoryTick] = useState(0)
 
   const { toasts, toast, dismiss } = useToasts()
@@ -64,6 +68,7 @@ export default function App() {
   const currentIdRef = useLatest(currentId)
   const selectedIdRef = useLatest(selectedId)
   const activeLabelIdRef = useLatest(activeLabelId)
+  const askLabelRef = useLatest(askLabel)
   const hiddenRef = useLatest(hidden)
   const suggestionsRef = useLatest(suggestions)
   const pickerRef = useLatest(picker)
@@ -165,6 +170,10 @@ export default function App() {
     if (phase === 'ready') remember(REMEMBER_LABEL, activeLabelId)
   }, [phase, activeLabelId])
 
+  useEffect(() => {
+    remember(REMEMBER_ASK, askLabel ? '1' : '0')
+  }, [askLabel])
+
   // -------------------------------------------------------- edits + undo
 
   const stacksFor = (imageId) => {
@@ -224,14 +233,15 @@ export default function App() {
   const addBoxes = useCallback(
     (rects, { select = true } = {}) => {
       const image = currentImage()
-      if (!image) return
+      if (!image) return []
       const created = rects
         .map((rect) => ({ id: uid(), label_id: rect.label_id, ...fitRect(rect, image) }))
         .filter((box) => box.w >= 1 && box.h >= 1)
-      if (created.length === 0) return
+      if (created.length === 0) return []
       commit(image.id, [...image.annotations, ...created])
       reveal(created.map((box) => box.label_id))
       if (select && created.length === 1) setSelectedId(created[0].id)
+      return created
     },
     [commit, currentImage, reveal],
   )
@@ -264,8 +274,9 @@ export default function App() {
     [commit, currentImage],
   )
 
+  /** `record: false` folds the change into the previous undo step. */
   const relabelBox = useCallback(
-    (boxId, labelId) => {
+    (boxId, labelId, record = true) => {
       const image = currentImage()
       const box = image?.annotations.find((item) => item.id === boxId)
       if (!box) return
@@ -273,6 +284,7 @@ export default function App() {
         commit(
           image.id,
           image.annotations.map((item) => (item.id === boxId ? { ...item, label_id: labelId } : item)),
+          record,
         )
       }
       reveal([labelId])
@@ -315,7 +327,8 @@ export default function App() {
       setPicker(null)
       setActiveLabelId(labelId)
       if (waiting.mode === 'new') addBoxes([{ ...waiting.rect, label_id: labelId }])
-      else relabelBox(waiting.boxId, labelId)
+      // Naming a box that was just drawn is part of drawing it: one undo step.
+      else relabelBox(waiting.boxId, labelId, !waiting.fresh)
     },
     [addBoxes, pickerRef, relabelBox],
   )
@@ -328,17 +341,23 @@ export default function App() {
     [createLabel, resolvePicker],
   )
 
-  /** Choose the label to draw with. If the picker is open, this answers it. */
+  /**
+   * A label was clicked in the panel or chosen with 1-9. It answers the
+   * picker if one is open, relabels the selected box if there is one, and
+   * in every case becomes the label that new boxes start with.
+   */
   const activateLabel = useCallback(
     (labelId) => {
       if (pickerRef.current) {
         resolvePicker(labelId)
         return
       }
+      const box = selectedRef.current
       setActiveLabelId(labelId)
       reveal([labelId])
+      if (box) relabelBox(box.id, labelId)
     },
-    [pickerRef, resolvePicker, reveal],
+    [pickerRef, relabelBox, resolvePicker, reveal, selectedRef],
   )
 
   const createAndActivateLabel = useCallback(
@@ -520,10 +539,18 @@ export default function App() {
         if (currentIdRef.current !== imageId) return
       }
       const labelId = activeLabelIdRef.current
-      if (validLabel(labelId)) addBoxes([{ ...box, label_id: labelId }])
-      else openPicker({ mode: 'new', rect: box })
+      if (!validLabel(labelId)) {
+        openPicker({ mode: 'new', rect: box })
+        return
+      }
+      // The box starts with the label used last, so nothing is ever lost.
+      // Unless "ask" is off, the picker then opens right next to it: Enter
+      // keeps that label, a click, 1-9 or typing chooses another.
+      const ask = askLabelRef.current
+      const created = addBoxes([{ ...box, label_id: labelId }], { select: ask })
+      if (ask && created.length === 1) openPicker({ mode: 'edit', boxId: created[0].id, fresh: true })
     },
-    [activeLabelIdRef, addBoxes, capsRef, currentIdRef, openPicker, validLabel],
+    [activeLabelIdRef, addBoxes, askLabelRef, capsRef, currentIdRef, openPicker, validLabel],
   )
 
   const nudge = useCallback(
@@ -1118,6 +1145,8 @@ export default function App() {
             hidden={hidden}
             boxes={current ? current.annotations : []}
             selectedId={selected ? selected.id : null}
+            askLabel={askLabel}
+            onAskLabel={setAskLabel}
             onActivate={activateLabel}
             onToggle={toggleLabel}
             onSolo={soloLabel}
