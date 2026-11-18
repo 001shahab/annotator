@@ -1,7 +1,7 @@
 """Smart tools: annotation assists built on classical computer vision.
 
-No neural network, no weights to download, no GPU. Everything here runs in
-a fraction of a second on a laptop:
+No neural network, no weights to download, no GPU. Images are analysed on a
+reduced copy, so the work stays small even for large scans:
 
     snap_box         tighten a rough box around the object inside it (GrabCut)
     click_box        one click -> a box around the region under the cursor
@@ -42,7 +42,7 @@ def load_image(path: Path) -> np.ndarray:
     """Read an image as BGR, keeping the last few in memory.
 
     Annotators run several tools in a row on the same image, so a tiny cache
-    makes every call after the first one feel instant.
+    saves decoding the file again on every call.
     """
     key = str(path)
     try:

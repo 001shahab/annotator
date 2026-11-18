@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import io
 import re
+import threading
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -25,6 +26,8 @@ try:  # PDF support is optional at runtime; the app still works without it.
 except Exception:  # pragma: no cover - depends on the environment
     pdfium = None
     PDF_AVAILABLE = False
+
+_PDF_LOCK = threading.Lock()
 
 PDF_DPI = 150.0
 PDF_MAX_SIDE = 3200.0
@@ -148,6 +151,12 @@ def _ingest_image(store: Store, filename: str, data: bytes) -> List[Dict[str, An
 def _ingest_pdf(store: Store, filename: str, data: bytes) -> Tuple[List[Dict[str, Any]], List[str]]:
     if not PDF_AVAILABLE:
         raise IngestError("PDF support needs the pypdfium2 package (pip install pypdfium2).")
+    # The PDF engine is not thread-safe, so documents are rendered one at a time.
+    with _PDF_LOCK:
+        return _render_pdf(store, filename, data)
+
+
+def _render_pdf(store: Store, filename: str, data: bytes) -> Tuple[List[Dict[str, Any]], List[str]]:
     try:
         document = pdfium.PdfDocument(data)
     except Exception as exc:
@@ -168,8 +177,11 @@ def _ingest_pdf(store: Store, filename: str, data: bytes) -> Tuple[List[Dict[str
                 try:
                     width_pt, height_pt = page.get_size()
                     scale = min(PDF_DPI / 72.0, PDF_MAX_SIDE / max(width_pt, height_pt, 1.0))
-                    # convert() copies the pixels, so the page can be released.
-                    rendered = page.render(scale=scale).to_pil().convert("RGB")
+                    # Keep the bitmap alive until convert() has copied its pixels;
+                    # after that the page can be released.
+                    bitmap = page.render(scale=scale)
+                    rendered = bitmap.to_pil().convert("RGB")
+                    del bitmap
                 finally:
                     page.close()
                 buffer = io.BytesIO()
